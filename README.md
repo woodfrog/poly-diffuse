@@ -3,6 +3,6 @@
 <img src="./assets/imgs/teaser.jpg" width=85% height=85%>
 </div>
 
-This repository provides the official implementation of the paper [PolyDiffuse: Polygonal Shape Reconstruction via Guided Set Diffusion Models](). 
+This repository provides the official implementation of the paper [PolyDiffuse: Polygonal Shape Reconstruction via Guided Set Diffusion Models](https://arxiv.org/abs/2306.01461). 
 
 The code will be released soon (before July). 
