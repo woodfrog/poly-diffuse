@@ -1,1 +1,8 @@
+data
+outputs
+init_results
 .DS_Store
+training-runs
+__pycache__
+viz*
+eval/visualizations
