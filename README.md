@@ -15,7 +15,7 @@ This repository provides the official implementation of the paper [PolyDiffuse: 
 The implementation of PolyDiffuse refers to the following open-source works: [EDM](https://github.com/NVlabs/edm), [RoomFormer](https://github.com/ywyue/RoomFormer), [MapTR](https://github.com/hustvl/MapTR), [HEAT](https://github.com/woodfrog/heat). We thank the authors for releasing their source code.
 
 ### Introduction video
-https://github.com/woodfrog/poly-diffuse-mock/assets/13405255/cdb818ca-b403-4e5d-8b4f-cec918b6c3cf
+https://github.com/woodfrog/poly-diffuse/assets/13405255/6dcd4bb6-9bd2-4fc8-aa65-c32b6ae0e92b
 
 
 ## TODO 
