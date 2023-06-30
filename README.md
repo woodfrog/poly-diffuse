@@ -96,8 +96,10 @@ The argument `results_dir` should be set up properly, which points to the sampli
 This evaluation pipeline follows [MonteFloor](https://arxiv.org/abs/2103.11161), [HEAT](https://github.com/woodfrog/heat), and [RoomFormer](https://github.com/ywyue/RoomFormer).
 
 #### Visualization
-Get the qualitative visualization results used in the paper with the script `eval/visualize_npy.py`, which includes the GIF animation of the denoising process.
-
+Get the qualitative visualization results used in the paper with the script `eval/visualize_npy.py`, including the GIF animation of the denoising process. Set up the paths in the script first, and then simply run:
+```
+python eval/visualize_npy.py
+```
 
 ## Training
 The training of PolyDiffuse consists of two separate stages: 1) guidance training and 2) denoising training.
@@ -107,13 +109,14 @@ Train the guidance network by:
 ```
 bash scripts/train_guide.sh
 ```
+The training of the guidance network takes less than an hour.
 
 #### Denoising training
 Then train the denoising network by:
 ```
 bash scripts/train.sh
 ```
-Note that the path to the guidance network trained in the first stage needs to be set up properly with the argument `guide_ckpt`.
+Note that the path to the guidance network trained in the first stage needs to be set up properly with the argument `guide_ckpt`. The training takes around 30 hours with 4 NVIDIA RTX A5000 GPUs on our machine.
 
 
 ## Acknowledgements
