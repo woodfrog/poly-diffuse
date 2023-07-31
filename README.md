@@ -21,10 +21,10 @@ https://github.com/woodfrog/poly-diffuse/assets/13405255/6dcd4bb6-9bd2-4fc8-aa65
 ## TODO 
 #### 1. Floorplan reconstruction
 - [x] PolyDiffuse code and model checkpoints
-- [ ] code and models of the adapted RoomFormer, which serves as our proposal generator (will be ready in July as a submodule)
+- [x] code and models of the adapted RoomFormer, which serves as our proposal generator (in the folder `./roomformer_adapted`)
 
 #### 2. HD mapping
-- [ ] PolyDiffuse code and model checkpoints (will be ready in July and will be in a separate branch)
+- [ ] PolyDiffuse code and model checkpoints (will be ready in late July and will be in a separate branch)
 
 
 ## Preparation
@@ -109,14 +109,19 @@ Train the guidance network by:
 ```
 bash scripts/train_guide.sh
 ```
-The training of the guidance network takes less than an hour.
+The training of the guidance network is very fast as there is no image information involved, and usually takes less than an hour. 
 
 #### Denoising training
 Then train the denoising network by:
 ```
 bash scripts/train.sh
 ```
-Note that the path to the guidance network trained in the first stage needs to be set up properly with the argument `guide_ckpt`. The training takes around 30 hours with 4 NVIDIA RTX A5000 GPUs on our machine.
+Note that the path to the guidance network trained in the first stage needs to be set up properly with the argument `guide_ckpt`. The training takes around 30 hours with 4 NVIDIA RTX A5000 GPUs on our machine. 
+
+
+## Adapted RoomFormer as the proposal generator
+
+The folder `./roomformer_adapted` contains our modified version of RoomFormer (see details in the paper). The same environment as PolyDiffuse works for this codebase, please check the [folder README](https://github.com/woodfrog/poly-diffuse/tree/main/roomformer_adapted) for pretrained weights and training/testing instructions.
 
 
 ## Acknowledgements

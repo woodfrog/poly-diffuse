@@ -1,0 +1,16 @@
+.DS_Store
+viz/*
+*.tar
+*.pdf
+*.zip
+svg_*
+*.html
+models/ops/build
+models/ops/dist
+models/ops/*egg-info
+__pycache__
+results
+montefloor_data
+.idea
+checkpoints
+*.png

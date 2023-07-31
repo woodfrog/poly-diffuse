@@ -301,7 +301,7 @@ def main(network_pkl, port, data_dir, init_dir, outdir, seeds, max_batch_size, g
     for data in tqdm.tqdm(data_loader, disable=(dist.get_rank() != 0)):
         idx += 1
         torch.distributed.barrier()
-        dist.print0(f'Generating No.{idx} example')
+
         gt_sample = data['polygon_verts'].to(device)
         roomformer_results = data['roomformer_results'].to(device)
         mimic_proposal_results = data['mimic_proposal_results'].to(device)
