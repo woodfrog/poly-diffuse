@@ -12,18 +12,40 @@ ArXiv preprint ([arXiv 2306.01461](https://arxiv.org/abs/2306.01461)), [Project 
 
 This repository provides the official implementation of the paper [PolyDiffuse: Polygonal Shape Reconstruction via Guided Set Diffusion Models](https://arxiv.org/abs/2306.01461). This branch contains the code of the **HD mapping** task. The code of the floorplan reconstruction task is in the ``main`` branch.
 
-The implementation of PolyDiffuse for the HD mapping task refers to the open-source works [EDM](https://github.com/NVlabs/edm) and [MapTR](https://github.com/hustvl/MapTR). The overall training and sampling framework follows EDM. The folder `projects` is borrowed and adapted from MapTR (for data pipeline, denoising network architecture, and evaluation). The folder `mmdetection3d` is the source code of `mmdet3d` copied from the original MapTR codebase, which will be compiled during installation. We thank the authors for releasing their source code.
+The implementation of PolyDiffuse for the HD mapping task refers to the open-source works [EDM](https://github.com/NVlabs/edm) and [MapTR](https://github.com/hustvl/MapTR). The overall training and sampling framework follows EDM, while the folder `projects` is borrowed and adapted from MapTR (for data pipeline, denoising network architecture, and evaluation). We thank the authors for releasing their source code.
 
 ### Introduction video
 https://github.com/woodfrog/poly-diffuse/assets/13405255/6dcd4bb6-9bd2-4fc8-aa65-c32b6ae0e92b
 
 
 ## Preparation
-The denoising network and the data pipeline are the same as [MapTR](https://github.com/hustvl/MapTR), so both the environment installation and dataset downloads follow MapTR.
+The denoising network and the data pipeline mostly follow MapTR, so both the environment installation and dataset downloads refer to the [original MapTR repo](https://github.com/hustvl/MapTR).
 
 
 #### Installation
-Please first follow the [instructions provided by the MapTR repo](https://github.com/hustvl/MapTR/blob/main/docs/install.md) to install the conda environment. Then, activate the MapTR conda environment and install the remaining dependencies by `pip install -r requirements.txt`.
+After trying the [installation instructions provided by the MapTR repo](https://github.com/hustvl/MapTR/blob/main/docs/install.md) on various machines, we found the following three-step installation process to be the most smooth:
+
+(1). Create a conda enviroment and activate it:
+```shell
+conda create -n polydiffuse-maptr python=3.8 -y
+conda activate polydiffuse-maptr
+```
+
+(2). Install the requirements via pip while ignoring the dependencies:
+```shell
+pip install -r requirements.txt --no-dependencies
+```
+
+(3). Compile the mmdet3d and GKT as in the original MapTR
+
+```shell
+cd ./mmdetection3d
+python setup.py develop
+cd ..
+
+cd ./projects/mmdet3d_plugin/maptr/modules/ops/geometric_kernel_attn
+python setup.py build install
+```
 
 
 #### Data
