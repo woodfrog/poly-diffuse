@@ -18,13 +18,13 @@ The implementation of PolyDiffuse refers to the following open-source works: [ED
 https://github.com/woodfrog/poly-diffuse/assets/13405255/6dcd4bb6-9bd2-4fc8-aa65-c32b6ae0e92b
 
 
-## TODO 
+## Catalog
 #### 1. Floorplan reconstruction
-- [x] PolyDiffuse code and model checkpoints
+- [x] PolyDiffuse code and model checkpoints (in this `main` branch)
 - [x] code and models of the adapted RoomFormer, which serves as our proposal generator (in the folder `./roomformer_adapted`)
 
 #### 2. HD mapping
-- [ ] PolyDiffuse code and model checkpoints (will be ready in late July and will be in a separate branch)
+- [x] PolyDiffuse code and model checkpoints (in the [`hd-mapping` branch](https://github.com/woodfrog/poly-diffuse/tree/hd-mapping))
 
 
 ## Preparation
