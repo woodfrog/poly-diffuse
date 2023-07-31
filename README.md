@@ -12,7 +12,7 @@ ArXiv preprint ([arXiv 2306.01461](https://arxiv.org/abs/2306.01461)), [Project 
 
 This repository provides the official implementation of the paper [PolyDiffuse: Polygonal Shape Reconstruction via Guided Set Diffusion Models](https://arxiv.org/abs/2306.01461). This branch contains the code of the **HD mapping** task. The code of the floorplan reconstruction task is in the ``main`` branch.
 
-The implementation of PolyDiffuse for the HD mapping task refers to the open-source works [EDM](https://github.com/NVlabs/edm) and [MapTR](https://github.com/hustvl/MapTR). The overall training and sampling framework follows EDM, while the folder `projects` is borrowed and adapted from MapTR (for data pipeline, denoising network architecture, and evaluation). We thank the authors for releasing their source code.
+The implementation of PolyDiffuse for the HD mapping task refers to the open-source works [EDM](https://github.com/NVlabs/edm) and [MapTR](https://github.com/hustvl/MapTR). The overall training and sampling framework follows EDM. The folder `projects` is borrowed and adapted from MapTR (for data pipeline, denoising network architecture, and evaluation). The folder `mmdetection3d` is the source code of `mmdet3d` copied from the original MapTR codebase, which will be compiled during installation. We thank the authors for releasing their source code.
 
 ### Introduction video
 https://github.com/woodfrog/poly-diffuse/assets/13405255/6dcd4bb6-9bd2-4fc8-aa65-c32b6ae0e92b
