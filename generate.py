@@ -155,6 +155,13 @@ def edm_sampler(
         t_hat = net.round_sigma(t_cur + gamma * t_cur)
         x_hat = x_cur + (t_hat ** 2 - t_cur ** 2).sqrt() * S_noise * randn_like(x_cur)
 
+        if i == 0:  # cache image features in the first step
+            model_kwargs['cache_image_feat'] = True
+            model_kwargs['use_cached_feat'] = False
+        else: # use the cached image features
+            model_kwargs['cache_image_feat'] = False
+            model_kwargs['use_cached_feat'] = True
+
         # Euler step.
         denoised = net(x_hat, t_hat, mu_guide, **model_kwargs).to(torch.float64)
         d_cur = (x_hat - denoised) / t_hat
@@ -162,12 +169,16 @@ def edm_sampler(
 
         # Apply 2nd order correction.
         if second_order and i < num_steps - 1:
+            model_kwargs['cache_image_feat'] = False
+            model_kwargs['use_cached_feat'] = True
             denoised = net(x_next, t_next, mu_guide, **model_kwargs).to(torch.float64)
             d_prime = (x_next - denoised) / t_next
             x_next = x_hat + (t_next - t_hat) * (0.5 * d_cur + 0.5 * d_prime)
         
         inter_results.append(x_next.cpu())
 
+    # clear the cache after finishing processing this sample
+    net.model.clear_cache()
     return x_next, inter_results
 
 #----------------------------------------------------------------------------
@@ -216,6 +227,7 @@ def parse_int_list(s):
 @click.option('--seeds',                   help='Random seeds (e.g. 1,2,5-10)', metavar='LIST',                     type=parse_int_list, default='0-63', show_default=True)
 @click.option('--port',                    help='Manully set the port number', metavar='STR',                     type=str, default='12345', show_default=True)
 @click.option('--batch', 'max_batch_size', help='Maximum batch size', metavar='INT',                                type=click.IntRange(min=1), default=64, show_default=True)
+@click.option('--workers',                 help='DataLoader worker processes', metavar='INT',                 type=click.IntRange(min=0), default=1, show_default=True)
 
 @click.option('--steps', 'num_steps',      help='Number of sampling steps', metavar='INT',                          type=click.IntRange(min=1), default=18, show_default=True)
 @click.option('--sigma_min',               help='Lowest noise level  [default: varies]', metavar='FLOAT',           type=click.FloatRange(min=0, min_open=True))
@@ -234,9 +246,10 @@ def parse_int_list(s):
 @click.option('--scaling',                 help='Ablate signal scaling s(t)', metavar='vp|none',                    type=click.Choice(['vp', 'none']))
 @click.option('--guide_ckpt',              help='Load the proposaal model', type=str)
 @click.option('--proposal_type',           help='The type of the proposal generator', metavar='roomformer|rough_annot',   type=click.Choice(['roomformer', 'rough_annot']))
+@click.option('--viz_results',             help='Visualize all steps with a gif', metavar='BOOL', type=bool, default=True, show_default=True)
 
 
-def main(network_pkl, port, data_dir, init_dir, outdir, seeds, max_batch_size, guide_ckpt, compute_likelihood, proposal_type, device=torch.device('cuda'), **sampler_kwargs):
+def main(network_pkl, port, data_dir, init_dir, outdir, seeds, max_batch_size, workers, guide_ckpt, compute_likelihood, proposal_type, viz_results, device=torch.device('cuda'), **sampler_kwargs):
     """Generate random images using the techniques described in the paper
     "Elucidating the Design Space of Diffusion-Based Generative Models".
     """
@@ -269,7 +282,7 @@ def main(network_pkl, port, data_dir, init_dir, outdir, seeds, max_batch_size, g
     network_kwargs.update(sigma_data=1.0)
 
     dataset_obj = dnnlib.util.construct_class_by_name(**dataset_kwargs) # subclass of training.dataset.Dataset
-    data_loader = torch.utils.data.DataLoader(dataset=dataset_obj, batch_size=max_batch_size)
+    data_loader = torch.utils.data.DataLoader(dataset=dataset_obj, batch_size=max_batch_size, num_workers=workers)
     net = dnnlib.util.construct_class_by_name(**network_kwargs) # subclass of torch.nn.Module
     net = net.to(device)
     net.eval()
@@ -356,29 +369,30 @@ def main(network_pkl, port, data_dir, init_dir, outdir, seeds, max_batch_size, g
             print('The sample likelihood is: {:.4f} bits/dim'.format(likelihood.item()))
             pred_polygons = pred_polygons.detach()
 
-        pred_polygons, pred_poly_ids = process_polygons(pred_polygons[0], attn_mask[0])
-        
-        # process all inter-step results
-        inter_polygons = [process_polygons(item[0], attn_mask[0], omit_small=False)[0] for item in inter_results]
-
-        gt_polygons, _ = process_polygons(gt_sample[0, :, :, :2], (gt_sample[0, :, :, -1]==-1))
-
-        density_path = data['density_path'][0]
-        normal_path = data['normal_path'][0]
         scene = data['density_path'][0].split('/')[-2].split('_')[-1]
-        density = cv2.imread(density_path)
-        normal = cv2.imread(normal_path)
-        viz_image = np.maximum(density, normal)
-
-        # Visualize the results
-        viz_path = os.path.join(viz_dir, 'scene_{}.png'.format(scene))
-        visualize_results(pred_polygons, pred_poly_ids, gt_polygons, viz_image, viz_path)
-        visualize_inter_results(inter_results, attn_mask[0], scene, viz_dir)
-
+        pred_polygons, pred_poly_ids = process_polygons(pred_polygons[0], attn_mask[0])
         save_path = os.path.join(save_dir, '{}.npy'.format(scene))
-        save_path_inter = os.path.join(save_dir, '{}_inter.npy'.format(scene))
         np.save(save_path, np.array(pred_polygons, dtype=object))
-        np.save(save_path_inter, np.array(inter_polygons, dtype=object))
+
+        if viz_results:
+            # process all inter-step results
+            inter_polygons = [process_polygons(item[0], attn_mask[0], omit_small=False)[0] for item in inter_results]
+
+            gt_polygons, _ = process_polygons(gt_sample[0, :, :, :2], (gt_sample[0, :, :, -1]==-1))
+
+            density_path = data['density_path'][0]
+            normal_path = data['normal_path'][0]
+            density = cv2.imread(density_path)
+            normal = cv2.imread(normal_path)
+            viz_image = np.maximum(density, normal)
+
+            # Visualize the results
+            viz_path = os.path.join(viz_dir, 'scene_{}.png'.format(scene))
+            visualize_results(pred_polygons, pred_poly_ids, gt_polygons, viz_image, viz_path)
+            visualize_inter_results(inter_results, attn_mask[0], scene, viz_dir)
+
+            save_path_inter = os.path.join(save_dir, '{}_inter.npy'.format(scene))
+            np.save(save_path_inter, np.array(inter_polygons, dtype=object))
 
     # Done.
     torch.distributed.barrier()

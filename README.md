@@ -83,7 +83,7 @@ First, run the sampling for all the test examples by:
 ```
 CUDA_VISIBLE_DEVICES=0 bash scripts/sample.sh
 ```
-Set up the `proposal_type` argument to init with mimic rough annotations. Note that the default parameters in the above testing script assume the use of pretrained checkpoints. If you re-train the models, remember to set up the parameters accordingly.
+Set up the `--proposal_type` argument to init with mimic rough annotations. Set `--viz_results=True` to show the visualization results including per-step GIF animation. Note that the default parameters in the above testing script assume the use of pretrained checkpoints. If you re-train the models, remember to set up the parameters accordingly.
 
 
 #### Evaluation

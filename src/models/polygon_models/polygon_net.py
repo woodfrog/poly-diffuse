@@ -152,6 +152,9 @@ class PolyModel(nn.Module):
 
         # hack implementation for iterative bounding box refinement
         self.transformer.decoder_time.coord_embed = self.coord_embed_noise
+        
+        self.cached = False
+        self.img_srcs, self.img_masks, self.img_all_pos = None, None, None
 
     @staticmethod
     def get_ms_feat(xs, img_mask):
@@ -164,11 +167,20 @@ class PolyModel(nn.Module):
         return out
     
     def forward(self, polys=None, timesteps=None, attn_mask=None, poly_mask=None,
-                image=None):
+                image=None, cache_image_feat=False, use_cached_feat=False):
         bs = image.shape[0]
 
-        srcs, masks, all_pos = self.process_image(image)
-        return self._estimate_noise(bs, polys, attn_mask, poly_mask, timesteps, srcs, masks, all_pos)
+        if use_cached_feat:
+            srcs, masks, all_pos = self.img_srcs, self.img_masks, self.img_all_pos
+        else:
+            srcs, masks, all_pos = self.process_image(image)
+
+        if cache_image_feat and (not use_cached_feat):
+            assert not self.cached
+            self.img_srcs, self.img_masks, self.img_all_pos = srcs, masks, all_pos
+            self.cached = True
+            
+        return self._estimate_noise(bs, polys, attn_mask, poly_mask, timesteps, srcs, masks, all_pos, cache_image_feat, use_cached_feat)
 
     def process_image(self, image):
         # Prepare image features
@@ -214,7 +226,7 @@ class PolyModel(nn.Module):
         return srcs, masks, all_pos
 
     def _estimate_noise(self, bs, polys, attn_mask, poly_mask, timesteps, 
-                        srcs, masks, all_pos):
+                        srcs, masks, all_pos, cache_image_feat, use_cached_feat):
         # Process polygon information
         num_polys = polys.size(1)
         num_verts = polys.size(2)
@@ -250,7 +262,7 @@ class PolyModel(nn.Module):
         hs, init_reference, inter_references = self.transformer(srcs, masks, all_pos, 
                                                                 query_embeds, vert_encodings, 
                                                                 raw_vert_coords, attn_mask,
-                                                                t_emb)
+                                                                t_emb, cache_image_feat, use_cached_feat)
 
         # produce the final output coords status
         outputs_class, outputs_coords = self._get_per_layer_results(hs, init_reference, inter_references, 'noise')
@@ -294,6 +306,11 @@ class PolyModel(nn.Module):
         outputs_class = torch.stack(outputs_classes)
         outputs_coords = torch.stack(outputs_coords)
         return outputs_class, outputs_coords
+    
+    def clear_cache(self):
+        self.transformer.clear_cache()
+        del self.img_srcs, self.img_masks, self.img_all_pos
+        self.cached = False
 
 
 class RoomTransformer(nn.Module):
@@ -324,6 +341,9 @@ class RoomTransformer(nn.Module):
                                                                return_intermediate_dec)
         self.level_embed = nn.Parameter(torch.Tensor(num_feature_levels, d_model))
 
+        self.cached = False
+        self.cached_feat = None
+
         self._reset_parameters()
 
     def _reset_parameters(self):
@@ -347,33 +367,58 @@ class RoomTransformer(nn.Module):
         return valid_ratio
 
     def forward(self, srcs, masks, pos_embeds, query_embed, vertex_encodings, 
-                vertex_coords=None, tgt_mask=None, t_emb=None):
+                vertex_coords=None, tgt_mask=None, t_emb=None, cache_image_feat=False,
+                use_cached_feat=False):
         # prepare input for encoder
-        src_flatten = []
-        mask_flatten = []
-        lvl_pos_embed_flatten = []
-        spatial_shapes = []
-        for lvl, (src, mask, pos_embed) in enumerate(zip(srcs, masks, pos_embeds)):
-            bs, c, h, w = src.shape
-            spatial_shape = (h, w)
-            spatial_shapes.append(spatial_shape)
-            src = src.flatten(2).transpose(1, 2)
-            mask = mask.flatten(1)
-            pos_embed = pos_embed.flatten(2).transpose(1, 2)
-            lvl_pos_embed = pos_embed + self.level_embed[lvl].view(1, 1, -1)
-            lvl_pos_embed_flatten.append(lvl_pos_embed)
-            src_flatten.append(src)
-            mask_flatten.append(mask)
-        src_flatten = torch.cat(src_flatten, 1)
-        mask_flatten = torch.cat(mask_flatten, 1)
-        lvl_pos_embed_flatten = torch.cat(lvl_pos_embed_flatten, 1)
-        spatial_shapes = torch.as_tensor(spatial_shapes, dtype=torch.long, device=src_flatten.device)
-        level_start_index = torch.cat((spatial_shapes.new_zeros((1,)), spatial_shapes.prod(1).cumsum(0)[:-1]))
-        valid_ratios = torch.stack([self.get_valid_ratio(m) for m in masks], 1)
+        if use_cached_feat:
+            src_flatten = self.cached_feat['src_flatten']
+            mask_flatten = self.cached_feat['mask_flatten']
+            lvl_pos_embed_flatten = self.cached_feat['lvl_pos_embed_flatten']
+            spatial_shapes = self.cached_feat['spatial_shapes']
+            level_start_index = self.cached_feat['level_start_index']
+            valid_ratios = self.cached_feat['valid_ratios']
+            memory = self.cached_feat['memory']
+            self.cached = True
+        else:
+            src_flatten = []
+            mask_flatten = []
+            lvl_pos_embed_flatten = []
+            spatial_shapes = []
+            for lvl, (src, mask, pos_embed) in enumerate(zip(srcs, masks, pos_embeds)):
+                bs, c, h, w = src.shape
+                spatial_shape = (h, w)
+                spatial_shapes.append(spatial_shape)
+                src = src.flatten(2).transpose(1, 2)
+                mask = mask.flatten(1)
+                pos_embed = pos_embed.flatten(2).transpose(1, 2)
+                lvl_pos_embed = pos_embed + self.level_embed[lvl].view(1, 1, -1)
+                lvl_pos_embed_flatten.append(lvl_pos_embed)
+                src_flatten.append(src)
+                mask_flatten.append(mask)
+            src_flatten = torch.cat(src_flatten, 1)
+            mask_flatten = torch.cat(mask_flatten, 1)
+            lvl_pos_embed_flatten = torch.cat(lvl_pos_embed_flatten, 1)
+            spatial_shapes = torch.as_tensor(spatial_shapes, dtype=torch.long, device=src_flatten.device)
+            level_start_index = torch.cat((spatial_shapes.new_zeros((1,)), spatial_shapes.prod(1).cumsum(0)[:-1]))
+            valid_ratios = torch.stack([self.get_valid_ratio(m) for m in masks], 1)
 
-        # encoder
-        memory = self.encoder(src_flatten, spatial_shapes, level_start_index, valid_ratios, lvl_pos_embed_flatten,
-                              mask_flatten)
+            # encoder
+            memory = self.encoder(src_flatten, spatial_shapes, level_start_index, valid_ratios, lvl_pos_embed_flatten,
+                                  mask_flatten)
+        
+        if cache_image_feat:
+            assert (not self.cached) and (not use_cached_feat)
+            self.cached_feat = {
+                'memory': memory,
+                'src_flatten': src_flatten,
+                'mask_flatten': mask_flatten,
+                'lvl_pos_embed_flatten': lvl_pos_embed_flatten,
+                'spatial_shapes': spatial_shapes,
+                'level_start_index': level_start_index,
+                'valid_ratios': valid_ratios,
+            }
+            self.cached = True
+            
     
         # prepare input for decoder
         bs, _, c = memory.shape
@@ -388,3 +433,10 @@ class RoomTransformer(nn.Module):
                                                 key_padding_mask=tgt_mask)
 
         return hs, init_reference_out, inter_references
+
+    def clear_cache(self):
+        del self.cached_feat
+        self.cached = False
+        
+        
+        
