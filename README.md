@@ -1,11 +1,13 @@
 <div align="center">
 <h2 align="center">PolyDiffuse: Polygonal Shape Reconstruction via <br/> Guided Set Diffusion Models</h2>
 
+<h4 align="center"> NeurIPS 2023 </h4>
+
 [Jiacheng Chen](https://jcchen.me) , [Ruizhi Deng](https://ruizhid.me) , [Yasutaka Furukawa](https://www2.cs.sfu.ca/~furukawa/)
 
-Simon Fraser University
+Simon Fraser University 
 
-ArXiv preprint ([arXiv 2306.01461](https://arxiv.org/abs/2306.01461)), [Project page](https://poly-diffuse.github.io/)
+[ArXiv](https://arxiv.org/abs/2306.01461), [Project page](https://poly-diffuse.github.io/)
 
 <img src="./assets/imgs/teaser.jpg" width=85% height=85%>
 </div>
