@@ -47,7 +47,7 @@ cd ../../../..
 ```
 
 #### Data
-Download the data file from this [link](https://drive.google.com/file/d/15FJMhrgavqO1g3NQ-m4D63xLxTL9Yvbi/view?usp=sharing), put it into `./data` and unzip.
+Download the data file from this [link](https://www.dropbox.com/scl/fi/2lvtqjyorp4bc92dx4aea/processed_s3d.zip?rlkey=womgwak63agctkf1eyvzajrfp&st=wcwzmuwh&dl=0), put it into `./data` and unzip.
 
 Unzip the results of RoomFormer, which serves as one of our proposal generators:
 ```
@@ -57,7 +57,7 @@ cd ..
 ```
 
 #### Model checkpoints
-Download the pretrained models from this [link](https://drive.google.com/file/d/1TzDbMNPQ1gNzFmwg9R-kOH2-Utvm7BYZ/view?usp=sharing), put it into `./training-runs` and unzip.
+Download the pretrained models from this [link](https://www.dropbox.com/scl/fi/f0z0x1xfy6qi0bbmxwgh4/s3d_pretrained_ckpts.zip?rlkey=w1wmjrrwvlwxf7jyhvj2vj8bj&st=0yz1p8en&dl=0), put it into `./training-runs` and unzip.
 
 The final file structure should be as follows:
 
