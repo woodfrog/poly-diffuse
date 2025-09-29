@@ -30,7 +30,11 @@ https://github.com/woodfrog/poly-diffuse/assets/13405255/6dcd4bb6-9bd2-4fc8-aa65
 
 
 ## Preparation
-Please follow the instructions below to install the environment as well as downloading the data and pretrained models.
+Please follow the instructions below to install the environment, as well as download the data and pretrained models.
+
+A copy of all the resources on BaiduNetDisk: 
+- Link: https://pan.baidu.com/s/1WpO3rrgnJQqG_Z2YQzb3Kg   
+- Code: caam 
 
 #### Installation
 First, install the environment via conda:
